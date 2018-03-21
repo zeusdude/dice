@@ -40,8 +40,8 @@ public class MainView : MonoBehaviour {
 		_gameController.ActionEventHandler += _EventCallback;
 
 		_gameBoardTiles = new GameObject[_gameController.state.width, _gameController.state.height];
-		_gameController.Execute(new DiceGame.FillBoardAction(_gameController.testTiles));
-		//_gameController.Execute(new DiceGame.FillBoardAction(_gameController.pickableTiles));
+		//_gameController.Execute(new DiceGame.FillBoardAction(_gameController.testTiles));
+		_gameController.Execute(new DiceGame.FillBoardAction(_gameController.pickableTiles));
 		_FillBoard();
 	}
 	
