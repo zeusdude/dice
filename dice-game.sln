@@ -1,0 +1,23 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 11.00
+# Visual Studio 2010
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "dice-game", "Assembly-CSharp.csproj", "{3DB961AA-F4AF-6671-1F9D-D3D9BBB74FB3}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{3DB961AA-F4AF-6671-1F9D-D3D9BBB74FB3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3DB961AA-F4AF-6671-1F9D-D3D9BBB74FB3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3DB961AA-F4AF-6671-1F9D-D3D9BBB74FB3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3DB961AA-F4AF-6671-1F9D-D3D9BBB74FB3}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(MonoDevelopProperties) = preSolution
+		StartupItem = Assembly-CSharp.csproj
+	EndGlobalSection
+EndGlobal
