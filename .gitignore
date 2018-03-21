@@ -22,4 +22,5 @@ Dockerfile.dep
 build.json
 /Temp
 /obj
+/Library
 \.nyc_output/
