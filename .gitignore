@@ -22,5 +22,8 @@ Dockerfile.dep
 build.json
 /Temp
 /obj
-/Library
-\.nyc_output/
+/Library/metadata
+/Library/cache
+/Library/ShaderCache
+/Library/ScriptAssemblies
+/Library/*.log
