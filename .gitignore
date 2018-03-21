@@ -27,3 +27,5 @@ build.json
 /Library/ShaderCache
 /Library/ScriptAssemblies
 /Library/*.log
+Library/CurrentLayout.dwlt
+Library/assetDatabase3
