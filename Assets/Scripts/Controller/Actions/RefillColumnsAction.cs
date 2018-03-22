@@ -13,7 +13,7 @@ namespace DiceGame
             _tilesToChooseFrom = tilesToChooseFrom;
         }
 
-        GameState IGameAction.doAction(GameState state, EventHandler eventHandler)
+        void IGameAction.Execute(GameState state, EventHandler eventHandler)
         {
             RefillEvent refillEvent = new RefillEvent();
 
@@ -54,7 +54,7 @@ namespace DiceGame
                     {
                         if (state[col, row] == "e")
                         {
-                            state[col, row] = randomTile();
+                            state[col, row] = _RandomTile();
                             didNew = true;
 
                             refillEvent.newTileList.Add(new RefillEvent.NewTileInfo(col, row, state[col, row]));
@@ -65,11 +65,9 @@ namespace DiceGame
 
             if (eventHandler != null)
                 eventHandler(this, refillEvent);
-
-            return state;
         }
 
-        public string randomTile()
+        private string _RandomTile()
         {
             int randomIndex = _random.Next(0, this._tilesToChooseFrom.Length);
             return this._tilesToChooseFrom[randomIndex];

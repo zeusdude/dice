@@ -42,7 +42,7 @@ namespace DiceGame
             set { _tiles[width, height] = value; }
         }
 
-        public string boardAsString()
+        public string BoardAsString()
         {
             StringBuilder stringBuilder = new StringBuilder();
 

@@ -12,9 +12,8 @@ namespace DiceGame
         {
         }
 
-        GameState IGameAction.doAction(GameState state, EventHandler eventHandler)
+        void IGameAction.Execute(GameState state, EventHandler eventHandler)
         {
-            return state;
         }
     }
 }

@@ -5,6 +5,6 @@ namespace DiceGame
 {
     public interface IGameAction
     {
-        GameState doAction(GameState state, EventHandler eventHandler);
+        void Execute(GameState state, EventHandler eventHandler);
     }
 }

@@ -1,16 +1,16 @@
-1. Why Destroy(...) tiles, wouldn't recyclng them be better.  Seems like it would
+- Why Destroy(...) tiles, wouldn't recyclng them be better.  Seems like it would
    be much better for memory consumption.
 
    https://www.raywenderlich.com/136091/object-pooling-unity
 
-2. Particle Effects
+
+
+- Particle Effects
     - Dice destruction?
 
-3. Sprite Sheet
+
+
+- Sprite Sheet
     - To make pip animation more interesting?
 
-4. I should get rid of RemovePipsEvent and ShootVictimEvent and instead build an ActivateTileEvent with
-   lists.  Same thing I did for RefillEvent.
 
-5. Bugs
-    - 

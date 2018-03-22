@@ -15,13 +15,16 @@ namespace DiceGame
           this._row = row;
         }
 
-        GameState IGameAction.doAction(GameState state, EventHandler eventHandler)
+        void IGameAction.Execute(GameState state, EventHandler eventHandler)
         {
+            ActivateTileEvent activateTileEvent = new ActivateTileEvent();
+            activateTileEvent.score = 0;
+
             string tileChosen = state[this._col, this._row];
-            char [,] pattern = this._getPattern(tileChosen);
+            char [,] pattern = this._GetPattern(tileChosen);
 
             Trace.WriteLine(String.Format("Activate {0} at {1},{2}", tileChosen, this._col, this._row));
-            Trace.WriteLine(_patternAsString(pattern));
+            Trace.WriteLine(_PatternAsString(pattern));
 
             // Multipliers (2x, 3x, ...)
             //   If you activate a die that shoots another die and the victim is the same die type as the shooter then
@@ -30,6 +33,7 @@ namespace DiceGame
             //   Hitting a multiplier on an activation does what you expect, it multiplies the score you get on that
             //   activation.  Beware, hitting ONLY multipliers gets ZERO pts.
             int currentMultiplier = 2;
+            int scoreMultiplier = 1;
 
             //
             // Destroy tiles based on pattern
@@ -57,12 +61,25 @@ namespace DiceGame
                             }
                             else
                             {
+                                char scoreChar = state[boardPosCol, boardPosRow][0];
+                                if (Char.IsNumber(scoreChar))
+                                {
+                                    int scoreCharAsInt = scoreChar - '0';
+                                    activateTileEvent.score += scoreCharAsInt * 10;
+                                }
+                                else if (scoreChar == 'x')
+                                {
+                                    char multiplierChar = state[boardPosCol, boardPosRow][1];
+                                    int multiplierCharAsInt = multiplierChar - '0';
+                                    scoreMultiplier *= multiplierCharAsInt;
+                                }
+
                                 state[boardPosCol, boardPosRow] = "e"; // Empty
                             }
 
                             if (eventHandler != null)
                             {
-                                eventHandler(this, new ShootVictimEvent(this._col, this._row, boardPosCol, boardPosRow));
+                                activateTileEvent.shootVictimList.Add(new ActivateTileEvent.ShootVictimInfo(this._col, this._row, boardPosCol, boardPosRow));
                             }
                         }
                     }
@@ -73,18 +90,26 @@ namespace DiceGame
             // Deal with a blank die.  This happens when tileChosen returns a pattern of '-' for the center
             if (pattern[1,1] == '-')
             {
+                char scoreChar = state[this._col, this._row][0];
+                if (Char.IsNumber(scoreChar))
+                {
+                    int scoreCharAsInt = scoreChar - '0';
+                    activateTileEvent.score += scoreCharAsInt * 10;
+                }
+
                 state[this._col, this._row] = "b"; // Blank
 
                 if (eventHandler != null)
                 {
-                    eventHandler(this, new RemovePipsEvent(this._col, this._row));
+                    activateTileEvent.removePipsInfo = new ActivateTileEvent.RemovePipsInfo(this._col, this._row);
                 }
             }
 
-            return state;
+            activateTileEvent.score *= scoreMultiplier;
+            eventHandler(this, activateTileEvent);
         }
 
-        private string _patternAsString(char[,] pattern)
+        private string _PatternAsString(char[,] pattern)
         {
             StringBuilder stringBuilder = new StringBuilder();
 
@@ -100,7 +125,7 @@ namespace DiceGame
             return stringBuilder.ToString();
         }
 
-        private char [,] _getPattern(string tileChosen)
+        private char [,] _GetPattern(string tileChosen)
         {
             //
             // Legend:

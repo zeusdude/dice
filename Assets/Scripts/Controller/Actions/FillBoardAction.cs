@@ -13,20 +13,18 @@ namespace DiceGame
             _tilesToChooseFrom = tilesToChooseFrom;
         }
 
-        GameState IGameAction.doAction(GameState state, EventHandler eventHandler)
+        void IGameAction.Execute(GameState state, EventHandler eventHandler)
         {
             for (int col = 0; col < state.width; ++col) 
             {
                 for (int row = 0; row < state.height; ++row)
                 {
-                    state[col, row] = randomTile();
+                    state[col, row] = _RandomTile();
                 }
             }
-
-            return state;
         }
 
-        public string randomTile()
+        private string _RandomTile()
         {
             int randomIndex = _random.Next(0, this._tilesToChooseFrom.Length);
             return this._tilesToChooseFrom[randomIndex];

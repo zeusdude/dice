@@ -24,7 +24,7 @@ namespace DiceGame
 
         public void Execute(IGameAction action)
         {
-            state = action.doAction(_gameState, ActionEventHandler);
+            action.Execute(_gameState, ActionEventHandler);
         }
 
         public GameState state 
@@ -43,7 +43,7 @@ namespace DiceGame
             get { return _testTiles; }
         }
 
-        public bool isTilePickable(int boardCol, int boardRow)
+        public bool IsTilePickable(int boardCol, int boardRow)
         {
             string boardTile = _gameState[boardCol, boardRow];
             return _pickableTiles.Contains(boardTile);
@@ -51,7 +51,7 @@ namespace DiceGame
 
         //
         // Returns arrayList of GameState.TileLocation
-        public List<GameState.TileLocation> pickableTileLocations()
+        public List<GameState.TileLocation> PickableTileLocations()
         {
             List<GameState.TileLocation> pickableTileLocations = new List<GameState.TileLocation>();
 
@@ -59,7 +59,7 @@ namespace DiceGame
             {
                 for (int row = 0; row < state.height; ++row)
                 {
-                    if (isTilePickable(col, row))
+                    if (IsTilePickable(col, row))
                     {
                         pickableTileLocations.Add(new GameState.TileLocation(col, row));    
                     }

@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class MainView : MonoBehaviour {
 	private struct ObjectInMotion {
@@ -16,17 +17,22 @@ public class MainView : MonoBehaviour {
 	public GameObject startTile;
 	public GameObject pipPrefab;
 	public List<GameObject> tilePrefabs;
+	public Text scoreText;
 	private GameObject _blankPrefabTile;
 
 	private DiceGame.GameController _gameController = new DiceGame.GameController(new DiceGame.GameState(4, 6));
 	private GameObject[,] _gameBoardTiles;
 	private List<ObjectInMotion> _objectsInMotion = new List<ObjectInMotion>();
 	private const float _dieDropSpeed = 1.2f; // Larger is faster
-
 	private Vector3 _tileSize;
+	private int _totalScore;
+	private int _pendingScore;
 
 	// Use this for initialization
 	void Start () {
+		_totalScore = 0;
+		_pendingScore = 0;
+
 		//
 		// Initialize
 		SpriteRenderer sr = startTile.GetComponent<SpriteRenderer>();
@@ -55,7 +61,7 @@ public class MainView : MonoBehaviour {
 				RaycastHit2D hit = Physics2D.Raycast(Camera.main.ScreenToWorldPoint(Input.mousePosition), Vector2.zero);
 				if (hit.collider != null) {
 					//Debug.Log("Target Position: " + hit.collider.gameObject.transform.position);
-					IntPoint? positionOnGameBoard = _tilePositionOnGameBoard(hit.collider.gameObject);
+					IntPoint? positionOnGameBoard = _TilePositionOnGameBoard(hit.collider.gameObject);
 					if (positionOnGameBoard.HasValue == false) {
 						Debug.Log("positionOnGameBoard.HasValue is false - something went wrong.");
 					} else {
@@ -79,7 +85,7 @@ public class MainView : MonoBehaviour {
 
 	private void _FillBoard() {
 		Debug.Log("[_FillBoard]");
-		Debug.Log(_gameController.state.boardAsString());
+		Debug.Log(_gameController.state.BoardAsString());
 
 		Vector3 startPosition = startTile.transform.position;
 
@@ -89,7 +95,7 @@ public class MainView : MonoBehaviour {
 
 		for (int col = 0; col < _gameController.state.width; ++col) {
 			for (int row = 0; row < _gameController.state.height; ++row) {
-				GameObject prefab = _prefabForGameBoardPosition(col, row);
+				GameObject prefab = _PrefabForGameBoardPosition(col, row);
 
 				//
 				// Fill with prefab or remove a tile that is no longer available...
@@ -109,13 +115,9 @@ public class MainView : MonoBehaviour {
     {
 		Type eventType = e.GetType();
 
-		if (eventType == typeof(DiceGame.ShootVictimEvent))
+		if (eventType == typeof(DiceGame.ActivateTileEvent))
 		{
-			_HandleShootVictimEvent((DiceGame.ShootVictimEvent)e);
-		}
-		else if (eventType == typeof(DiceGame.RemovePipsEvent))
-		{
-			_HandleRemovePipsEvent((DiceGame.RemovePipsEvent)e);
+			_HandleActivateTileEvent((DiceGame.ActivateTileEvent)e);
 		}
 		else if (eventType == typeof(DiceGame.RefillEvent))
 		{
@@ -126,7 +128,26 @@ public class MainView : MonoBehaviour {
 		}
     }
 
-	private IntPoint? _tilePositionOnGameBoard(GameObject tile)
+	private void _HandleActivateTileEvent(DiceGame.ActivateTileEvent activateTileEvent)
+	{
+		Debug.LogFormat("_HandleActivateTileEvent");
+		activateTileEvent.shootVictimList.ForEach(shootVictimInfo => _ShootVictim(shootVictimInfo));
+
+		if (activateTileEvent.removePipsInfo != null)
+			_RemovePips(activateTileEvent.removePipsInfo);
+
+		_pendingScore = activateTileEvent.score;
+	}
+
+	private void _HandleRefillEvent(DiceGame.RefillEvent refillEvent)
+	{
+		Debug.LogFormat("_HandleRefillEvent");
+
+		refillEvent.moveTileList.ForEach(moveTileInfo => _MoveTile(moveTileInfo));
+		_ProcessNewTileList(refillEvent.newTileList);
+	}
+
+	private IntPoint? _TilePositionOnGameBoard(GameObject tile)
 	{
 		for (int col = 0; col < _gameController.state.width; ++col) {
 			for (int row = 0; row < _gameController.state.height; ++row) {
@@ -163,24 +184,31 @@ public class MainView : MonoBehaviour {
 		// new objects will be added to _objectsInMotion.
 		if (_objectsInMotion.Count == 0)
 		{
+			if (_pendingScore != 0)
+			{
+				_totalScore += _pendingScore;
+				_pendingScore = 0;
+				scoreText.text = "Score: " + _totalScore.ToString();
+			}
+
 			_gameController.Execute(new DiceGame.RefillColumnsAction(_gameController.refillTiles));
 		}
 	}
 
-	private void _HandleShootVictimEvent(DiceGame.ShootVictimEvent shootVictimEvent)
+	private void _ShootVictim(DiceGame.ActivateTileEvent.ShootVictimInfo shootVictimInfo)
     {
-		Debug.LogFormat("_HandleShootVictimEvent {0},{1} -> {2},{3}",
-			shootVictimEvent.shooterCol, shootVictimEvent.shooterRow,
-			shootVictimEvent.victimCol, shootVictimEvent.victimRow);
+		Debug.LogFormat("_ShootVictim {0},{1} -> {2},{3}",
+			shootVictimInfo.shooterCol, shootVictimInfo.shooterRow,
+			shootVictimInfo.victimCol, shootVictimInfo.victimRow);
 
 		//
 		// Pip animation
 		//if (shootVictimEvent.shooterCol != shootVictimEvent.victimCol || shootVictimEvent.shooterRow != shootVictimEvent.victimRow)
 		{
-			int shooterCol = shootVictimEvent.shooterCol;
-			int shooterRow = shootVictimEvent.shooterRow;
-			int victimCol = shootVictimEvent.victimCol;
-			int victimRow = shootVictimEvent.victimRow;
+			int shooterCol = shootVictimInfo.shooterCol;
+			int shooterRow = shootVictimInfo.shooterRow;
+			int victimCol = shootVictimInfo.victimCol;
+			int victimRow = shootVictimInfo.victimRow;
 
 			GameObject shooterObject = _gameBoardTiles[shooterCol, shooterRow];
 			GameObject victimObject = _gameBoardTiles[victimCol, victimRow];
@@ -205,7 +233,7 @@ public class MainView : MonoBehaviour {
 			objInMotion.OnMotionComplete = () => {
 				Destroy(victimObject);
 
-				GameObject prefab = _prefabForGameBoardPosition(victimCol, victimRow);
+				GameObject prefab = _PrefabForGameBoardPosition(victimCol, victimRow);
 				if (prefab) {
 					_gameBoardTiles[victimCol, victimRow] = Instantiate(prefab, _gameBoardTiles[victimCol, victimRow].transform.position, Quaternion.identity);
 				} else {
@@ -219,20 +247,20 @@ public class MainView : MonoBehaviour {
 		}
     }
 
-	private void _HandleRemovePipsEvent(DiceGame.RemovePipsEvent removePipsEvent)
+	private void _RemovePips(DiceGame.ActivateTileEvent.RemovePipsInfo removePipsInfo)
     {
-		Debug.LogFormat("_HandleRemovePipsEvent {0},{1}",
-			removePipsEvent.tileCol, removePipsEvent.tileRow);
+		Debug.LogFormat("_RemovePips {0},{1}",
+			removePipsInfo.tileCol, removePipsInfo.tileRow);
 
 		//
 		// This needs to animate eventually
-		GameObject oldObject = _gameBoardTiles[removePipsEvent.tileCol, removePipsEvent.tileRow];
-		_gameBoardTiles[removePipsEvent.tileCol, removePipsEvent.tileRow] = 
+		GameObject oldObject = _gameBoardTiles[removePipsInfo.tileCol, removePipsInfo.tileRow];
+		_gameBoardTiles[removePipsInfo.tileCol, removePipsInfo.tileRow] = 
 			Instantiate(_blankPrefabTile, oldObject.transform.position, Quaternion.identity);
 		Destroy(oldObject);
     }
 
-	private void _processNewTileList(List<DiceGame.RefillEvent.NewTileInfo> newTileList)
+	private void _ProcessNewTileList(List<DiceGame.RefillEvent.NewTileInfo> newTileList)
 	{
 		//
 		// Order of operation is important here.  Final position (closest to the top of
@@ -247,7 +275,7 @@ public class MainView : MonoBehaviour {
 			newTileList.ForEach( newTileInfo => {
 				if (newTileInfo.col == column)
 				{
-					_newTile(newTileInfo, stackPosition);
+					_NewTile(newTileInfo, stackPosition);
 					++stackPosition;
 				}
 			});
@@ -255,15 +283,15 @@ public class MainView : MonoBehaviour {
 	}
 
 	// stackPosition == 0 is nearest the gameboard (i.e. Zero is bottom of stack)
-	private void _newTile(DiceGame.RefillEvent.NewTileInfo newTileInfo, int stackPosition)
+	private void _NewTile(DiceGame.RefillEvent.NewTileInfo newTileInfo, int stackPosition)
 	{
-		Debug.LogFormat("_newTile {0},{1} add {2}",
+		Debug.LogFormat("_NewTile {0},{1} add {2}",
 			newTileInfo.col, newTileInfo.row, newTileInfo.tileValue);
 
 		//
 		// Drop new tile from top of screen to new location
 		ObjectInMotion objInMotion = new ObjectInMotion();
-		GameObject prefab = _prefabFromDataModelTileName(newTileInfo.tileValue);
+		GameObject prefab = _PrefabFromDataModelTileName(newTileInfo.tileValue);
 		Vector3 initialTilePos = new Vector3(
 			startTile.transform.position.x + _tileSize.x * newTileInfo.col,
 			startTile.transform.position.y + _tileSize.y * stackPosition,
@@ -281,9 +309,9 @@ public class MainView : MonoBehaviour {
 		_objectsInMotion.Add(objInMotion);
 	}
 
-	private void _moveTile(DiceGame.RefillEvent.MoveTileInfo moveTileInfo)
+	private void _MoveTile(DiceGame.RefillEvent.MoveTileInfo moveTileInfo)
 	{
-		Debug.LogFormat("_moveTile {0},{1} to {2},{3}",
+		Debug.LogFormat("_MoveTile {0},{1} to {2},{3}",
 			moveTileInfo.col, moveTileInfo.fromRow, moveTileInfo.col, moveTileInfo.toRow);
 
 		//
@@ -305,19 +333,11 @@ public class MainView : MonoBehaviour {
 		_objectsInMotion.Add(objInMotion);
 	}
 
-	private void _HandleRefillEvent(DiceGame.RefillEvent refillEvent)
-	{
-		Debug.LogFormat("_HandleRefillEvent");
-
-		refillEvent.moveTileList.ForEach(moveTileInfo => _moveTile(moveTileInfo));
-		_processNewTileList(refillEvent.newTileList);
+	private GameObject _PrefabForGameBoardPosition(int col, int row) {
+		return _PrefabFromDataModelTileName(_gameController.state[col, row]);
 	}
 
-	private GameObject _prefabForGameBoardPosition(int col, int row) {
-		return _prefabFromDataModelTileName(_gameController.state[col, row]);
-	}
-
-	private GameObject _prefabFromDataModelTileName(string tileName) {
+	private GameObject _PrefabFromDataModelTileName(string tileName) {
 		for (int cnt = 0; cnt < tilePrefabs.Count; ++cnt) {
 			if (tilePrefabs[cnt].name.Equals(tileName)) {
 				return tilePrefabs[cnt];
